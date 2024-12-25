@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.hundia.cityNaukry.dao.InterviewRepository;
 import com.hundia.cityNaukry.pojo.Interview;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class InterviewService implements IInterviewService {
 
@@ -29,6 +31,12 @@ public class InterviewService implements IInterviewService {
 		 return interviewRepo.findAll();
 	}
 
+	@Override
+	@Transactional
+	public void deleteInterviewsByJobSeekerId(Long jobSeekerId) {
+	    // Delete all interviews related to the job seeker
+	    interviewRepo.deleteByJobSeekerJobSeekerId(jobSeekerId);
+	}
 
 
 

@@ -195,7 +195,7 @@ public class JobSeekerController {
 	     }
 	 }
 	 
-	 
+	//http://localhost:8086/jobSeeker/update/{jobSeekerId}
 	 @PutMapping("/update/{jobSeekerId}")
 	 public ResponseEntity<?> updateJobSeeker(
 	         @PathVariable("jobSeekerId") Long jobSeekerId,
@@ -352,6 +352,50 @@ public class JobSeekerController {
 	     }
 	 }
 
+//	 
+//	 @PostMapping("/resetPassword")
+//	 public ResponseEntity<?> resetPassword(
+//	     @RequestParam("token") String token,
+//	     @RequestParam("newPassword") String newPassword,
+//	     @RequestParam("confirmPassword") String confirmPassword) {
+//	     try {
+//	         // Validate the token
+//	         JobSeeker jobSeeker = jobseekerService.getJobSeekerByResetToken(token);
+//
+//	         if (jobSeeker == null || jobSeeker.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+//	             return new ResponseEntity<>(
+//	                 new ErrorResponse("Invalid token", "The password reset token is invalid or expired.", null),
+//	                 HttpStatus.BAD_REQUEST
+//	             );
+//	         }
+//
+//	         // Validate passwords match
+//	         if (!newPassword.equals(confirmPassword)) {
+//	             return new ResponseEntity<>(
+//	                 new ErrorResponse("Password mismatch", "The new password and confirm password do not match.", null),
+//	                 HttpStatus.BAD_REQUEST
+//	             );
+//	         }
+//
+//	         // Update the password and clear the token
+//	         jobSeeker.setPassword(newPassword); // Make sure the password is hashed before saving
+//	         jobSeeker.setResetToken(null);
+//	         jobSeeker.setResetTokenExpiry(null);
+//	         jobseekerService.updateJobSeeker(jobSeeker);
+//
+//	         return new ResponseEntity<>(
+//	             new SuccessResponse("Password reset successful", "Your password has been successfully reset.", null),
+//	             HttpStatus.OK
+//	         );
+//	     } catch (Exception e) {
+//	         e.printStackTrace();
+//	         return new ResponseEntity<>(
+//	             new ErrorResponse("Reset Password failed", e.getMessage(), null),
+//	             HttpStatus.INTERNAL_SERVER_ERROR
+//	         );
+//	     }
+//	 }
+
 	 
 	 @PostMapping("/resetPassword")
 	 public ResponseEntity<?> resetPassword(
@@ -362,6 +406,7 @@ public class JobSeekerController {
 	         // Validate the token
 	         JobSeeker jobSeeker = jobseekerService.getJobSeekerByResetToken(token);
 
+	         // Check if the token is invalid or expired
 	         if (jobSeeker == null || jobSeeker.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
 	             return new ResponseEntity<>(
 	                 new ErrorResponse("Invalid token", "The password reset token is invalid or expired.", null),
@@ -394,6 +439,26 @@ public class JobSeekerController {
 	             HttpStatus.INTERNAL_SERVER_ERROR
 	         );
 	     }
+	 }
+
+	 
+	 @GetMapping("/resetPassword")
+	 public ResponseEntity<?> getResetPasswordPage(@RequestParam("token") String token) {
+	     // Validate the token
+	     JobSeeker jobSeeker = jobseekerService.getJobSeekerByResetToken(token);
+
+	     if (jobSeeker == null || jobSeeker.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+	         return new ResponseEntity<>(
+	             new ErrorResponse("Invalid token", "The password reset token is invalid or expired.", null),
+	             HttpStatus.BAD_REQUEST
+	         );
+	     }
+
+	     // Token is valid, render the password reset form
+	     return new ResponseEntity<>(
+	         new SuccessResponse("Token valid", "You can now reset your password.", null),
+	         HttpStatus.OK
+	     );
 	 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -461,7 +526,7 @@ public class JobSeekerController {
 	 
 	 
 
-		//http://localhost:8086/jobSeeker/getAllScheduledInterviews
+	//http://localhost:8086/jobSeeker/getAllScheduledInterviews
 	 @GetMapping("/getAllScheduledInterviews")
 	 public ResponseEntity<?> getAllScheduledInterviews() {
 	     try {
@@ -482,9 +547,33 @@ public class JobSeekerController {
 	     }
 	 }
 	 
-	 
-	 
-	 
+	//http://localhost:8086/jobSeeker/delete/{jobSeekerId}
+	 @DeleteMapping("/delete/{jobSeekerId}")
+	 public ResponseEntity<?> deleteJobSeeker(@PathVariable("jobSeekerId") Long jobSeekerId){
+		
+		 
+		 try {
+			 JobSeeker existingJobSeeker =  jobseekerService.getJobSeekerById(jobSeekerId);
+			
+			 if (existingJobSeeker ==null) {
+				 return new ResponseEntity<>(new ErrorResponse("Job seeker not found", "No job seeker found with the provided ID", null),HttpStatus.NOT_FOUND);
+			 }
+			 
+			
+			 applicationService.deleteApplicationsByJobSeekerId(jobSeekerId);
+			 
+			 interviewService.deleteInterviewsByJobSeekerId(jobSeekerId);
+			 
+			 jobseekerService.deleteJobSeeker(jobSeekerId);
+			 
+			  return new ResponseEntity<>(new SuccessResponse("Job Seeker deleted successfully", null, existingJobSeeker),HttpStatus.OK);
+			 
+		} catch (Exception e) {
+			  return new ResponseEntity<>(new ErrorResponse("Error deleting job seeker", e.getMessage(), null),
+		                HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		 
+	 }
 	 
 	 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	 
@@ -501,6 +590,11 @@ public class JobSeekerController {
 	            // Check if job seeker and job post exist
 	            if (jobSeeker == null || jobPost == null) {
 	                return new ResponseEntity<>("Job Seeker or Job Post not found", HttpStatus.NOT_FOUND);
+	            }
+	            
+	            Application existingApplication = applicationService.getApplicationByJobSeekerAndJobPost(jobSeeker, jobPost);
+	            if (existingApplication != null) {
+	                return new ResponseEntity<>("You have already applied for this job", HttpStatus.BAD_REQUEST);
 	            }
 
 	            // Create a new application
@@ -557,7 +651,41 @@ public class JobSeekerController {
 	     }
 	 }
 
-	
+	///http://localhost:8086/jobSeeker/getPostsNotAppliedByJobSeeker
+	 @GetMapping("/getPostsNotAppliedByJobSeeker")
+	 public ResponseEntity<?> getPostsNotAppliedByJobSeeker(@RequestParam long jobSeekerId) {
+	     try {
+	         // Fetch the job seeker
+	         JobSeeker jobSeeker = jobseekerService.getJobSeekerById(jobSeekerId);
+
+	         if (jobSeeker == null) {
+	             // If the job seeker is not found, return a 404 Not Found response
+	             return new ResponseEntity<>("Job Seeker not found", HttpStatus.NOT_FOUND);
+	         }
+
+	         // Fetch all job posts
+	         List<JobPost> allJobPosts = jobPostService.getAllPosts();
+
+	         // Filter out the job posts where the job seeker has already applied
+	         List<JobPost> postsNotApplied = allJobPosts.stream()
+	                 .filter(jobPost -> {
+	                     // Check if there is an existing application from the job seeker for this job post
+	                     Application existingApplication = applicationService.getApplicationByJobSeekerAndJobPost(jobSeeker, jobPost);
+	                     return existingApplication == null;  // Only include posts where no application exists
+	                 })
+	                 .collect(Collectors.toList());
+
+	         // Check if any job posts are found
+	         if (postsNotApplied.isEmpty()) {
+	             return new ResponseEntity<>("No job posts available that the job seeker has not applied to", HttpStatus.NOT_FOUND);
+	         }
+
+	         return new ResponseEntity<>(postsNotApplied, HttpStatus.OK);
+	     } catch (Exception e) {
+	         // Handle any unexpected errors
+	         return new ResponseEntity<>("Error fetching job posts", HttpStatus.INTERNAL_SERVER_ERROR);
+	     }
+	 }
 	 
 
 	 

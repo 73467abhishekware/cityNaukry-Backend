@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hundia.cityNaukry.dao.ApplicationRepository;
 import com.hundia.cityNaukry.dao.EducationRepository;
 import com.hundia.cityNaukry.dao.JobSeekerRepository;
 import com.hundia.cityNaukry.dao.ProjectRepository;
@@ -36,6 +37,8 @@ public class JobSeekerService implements IJobSeekerService {
 	@Autowired
 	private ProjectRepository projectRepository;
 
+	@Autowired
+	private ApplicationRepository applictionRepo;
 //    @Override
 //    public JobSeeker registerJobSeeker(JobSeeker jobSeeker) {
 //        return jobSeekerRepo.save(jobSeeker);
@@ -151,6 +154,16 @@ public class JobSeekerService implements IJobSeekerService {
 		   return null; 
 	}
 
+
+
+	@Override
+	public void deleteJobSeeker(Long jobSeekerId) {
+		jobSeekerRepo.deleteById(jobSeekerId);
+	}
+
+
+
+	
 
 	
 }

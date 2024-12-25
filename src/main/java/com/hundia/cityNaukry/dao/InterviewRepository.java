@@ -13,6 +13,8 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
 	   @Query("SELECT i FROM Interview i WHERE i.jobPost.company.CompanyId = :companyId")
 	    List<Interview> findInterviewsByCompanyId(Long companyId);
 
+	void deleteByJobSeekerJobSeekerId(Long jobSeekerId);
+
 
 
 }

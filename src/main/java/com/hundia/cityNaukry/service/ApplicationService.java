@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.hundia.cityNaukry.dao.ApplicationRepository;
 import com.hundia.cityNaukry.dto.ApplicationDTO;
 import com.hundia.cityNaukry.pojo.Application;
+import com.hundia.cityNaukry.pojo.JobPost;
+import com.hundia.cityNaukry.pojo.JobSeeker;
 
 @Service
 public class ApplicationService implements IApplicationService{
@@ -57,6 +59,28 @@ public class ApplicationService implements IApplicationService{
 	public void deleteApplication(long applicationId) {
 		  applicationRepository.deleteById(applicationId);
 		
+	}
+
+	@Override
+	public void deleteApplicationsByJobSeekerId(Long jobSeekerId) {
+		try {
+	        // Fetch all applications related to the given jobSeekerId
+	        List<Application> applications = applicationRepository.findByJobSeeker_JobSeekerId(jobSeekerId);
+
+	        // If applications exist, delete them
+	        if (!applications.isEmpty()) {
+	        	applicationRepository.deleteAll(applications);
+	        }
+	    } catch (Exception e) {
+	        // Log the exception or handle it accordingly
+	        throw new RuntimeException("Error deleting applications for JobSeeker ID: " + jobSeekerId, e);
+	    }
+		
+	}
+
+	@Override
+	public Application getApplicationByJobSeekerAndJobPost(JobSeeker jobSeeker, JobPost jobPost) {
+		return applicationRepository.findByJobSeekerAndJobPost(jobSeeker, jobPost);
 	}
 
 }

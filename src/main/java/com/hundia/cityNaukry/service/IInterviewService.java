@@ -12,6 +12,8 @@ public interface IInterviewService {
 
 	List<Interview> getAllScheduledInterviews();
 
+	void deleteInterviewsByJobSeekerId(Long jobSeekerId);
+
 
 
 

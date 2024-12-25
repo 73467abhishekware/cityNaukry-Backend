@@ -38,5 +38,8 @@ public interface IJobSeekerService {
 
 	JobSeeker getJobSeekerByResetToken(String token);
 
+	void deleteJobSeeker(Long jobSeekerId);
+
+
 
 }
